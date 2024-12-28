@@ -60,41 +60,40 @@ int recv_ping(int socket_fd, char *ip_str, double *start, double *end) {
 		return icmp->type;
 	}
 	*end = get_time_val();
-	printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
-		buflen - ip->ihl * 4,
-		ip_str,
-		icmp->un.echo.sequence,
-		ip->ttl,
-		*end - *start);
+	if (pingloop)
+		printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
+			buflen - ip->ihl * 4,
+			ip_str,
+			icmp->un.echo.sequence,
+			ip->ttl,
+			*end - *start);
 	return 0;
 }
 
-void ping_loop(int socket_fd, struct in_addr host, char *hostname) {
-	char ip_str[INET_ADDRSTRLEN];
-	double start, end;
-	size_t total_pkgs = 0, recv_pkgs = 0;
-	t_stats stats = {0, 0, 0, 0, 0, 0, NULL};
+void ping_loop(int socket_fd, t_tokens *tokens, double *start, double *end, size_t
+	*total_pkgs, size_t *recv_pkgs, t_stats *stats) {
 
-	// get name from ip
-	inet_ntop(AF_INET, &host, ip_str, INET_ADDRSTRLEN);
-	printf("PING %s (%s): %d data bytes\n", hostname, ip_str, PAYLOAD_SIZE);
-	while (pingloop)
-	{
-		if (send_ping(socket_fd, host.s_addr, &start) == 0)
-		{
-			total_pkgs++;
-			if (recv_ping(socket_fd, ip_str, &start, &end) == 0) {
-				recv_pkgs++;
-				set_stats(&stats, end - start);
-			}
-			else
-				dprintf(STDERR_FILENO, "Request timeout for icmp_seq %ld\n", total_pkgs - 1);
-		}
-		sleep(INTERVAL);
-	}
-	ft_calculate_stats(hostname, total_pkgs, recv_pkgs, stats);
-	free_list(&stats.head);
+    if (send_ping(socket_fd, ((t_host_info *)(tokens->head->data))->ip.s_addr, start) == 0) {
+        (*total_pkgs)++;
+        if (recv_ping(socket_fd, ((t_host_info *)(tokens->head->data))->ip_str, start, end) == 0) {
+            (*recv_pkgs)++;
+            double diff = end - start;
+            double *diff_ptr = malloc(sizeof(double));
+            if (diff_ptr == NULL) {
+                perror("malloc");
+                exit(EXIT_FAILURE);
+            }
+            *diff_ptr = diff;
+            lst_add_back(&stats->head, lst_new(diff_ptr));
+            set_stats(stats, diff);
+        } /*else {
+            dprintf(STDERR_FILENO, "Request timeout for icmp_seq %ld\n", total_pkgs - 1);
+        }*/
+    }
+    if (pingloop)
+    	sleep(INTERVAL);
 }
+
 
 unsigned short calculate_checksum(unsigned short *packet, size_t len) {
 	unsigned short *buf = packet;
@@ -118,13 +117,16 @@ double	get_time_val(void)
 }
 
 void ft_calculate_stats(char *hostname, size_t total_pkgs, size_t recv_pkgs, t_stats stats) {
-	printf("\n--- %s ping statistics ---\n", hostname);
-	// TODO add time elapdsed
+	printf("--- %s ping statistics ---\n", hostname);
 	printf("%ld packets transmitted, %ld received, %.1ld%% packet loss\n",
 		total_pkgs,
 		recv_pkgs,
 		((total_pkgs - recv_pkgs) / total_pkgs) * 100);
-	printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n", stats.min, stats.avg, stats.max, stats.stddev);
+	printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n",
+		stats.min,
+		stats.avg,
+		stats.max,
+		stats.stddev);
 }
 
 void set_stats(t_stats *stats, double time) {
@@ -133,14 +135,12 @@ void set_stats(t_stats *stats, double time) {
 	stats->min = stats->min == 0 || stats->min > time ? time : stats->min;
 	stats->max = stats->max < time ? time : stats->max;
 	stats->avg = stats->total / stats->count;
-
-	lst_add_back(&stats->head, lst_new(time));
 	// Calculate standard deviation
-	t_timeval *aux = stats->head;
+	t_list *aux = stats->head;
 	double variance = 0.0;
 	while (aux->next != NULL)
 	{
-		variance += pow(aux->timeval - stats->avg, 2);
+		variance += pow(*(double *)aux->data - stats->avg, 2);
 		aux = aux->next;
 	}
 	stats->stddev = sqrt(variance / stats->count);

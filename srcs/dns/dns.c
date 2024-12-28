@@ -1,8 +1,13 @@
 #include "./../../includes/ft_ping.h"
 
-struct in_addr dns_look_up(char **host) {
+t_host_info *dns_look_up(char **host) {
 	struct addrinfo hints, *result;
+	t_host_info *ret = malloc(sizeof(t_host_info));
 
+	if (ret == NULL) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_flags = AI_CANONNAME;
@@ -13,11 +18,9 @@ struct in_addr dns_look_up(char **host) {
 		exit(-1);
 	}
 	struct sockaddr_in *addr = (struct sockaddr_in *)result->ai_addr;
-	struct in_addr ip = addr->sin_addr;
-	// Change host to canonical name
-	size_t ai_canonname_len = strlen(result->ai_canonname);
-	memset(*host, 0, ai_canonname_len + 1);
-	memcpy(*host, result->ai_canonname, ai_canonname_len);
+	ret->ip = addr->sin_addr;
+	ret->hostname = strdup(result->ai_canonname);
+	inet_ntop(AF_INET, &ret->ip, ret->ip_str, INET_ADDRSTRLEN);
 	freeaddrinfo(result);
-	return ip;
+	return ret;
 }

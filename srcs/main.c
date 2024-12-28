@@ -2,7 +2,7 @@
 
 bool pingloop = true;
 
-static int ft_ping(struct in_addr host, char *hostname) {
+static int ft_ping(t_tokens *tokens) {
 	int socket_fd;
 	int ttl = TTL;
 	struct timeval timeout = {TIMEOUT, 0};
@@ -12,11 +12,6 @@ static int ft_ping(struct in_addr host, char *hostname) {
 		printf("Error creating socket\n");
 		return 1;
 	}
-	// If you use this option, you have to construct the IP header
-	// if (setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0) {
-	// 	perror("Error setting IP_HDRINCL\n");
-	// 	return 1;
-	// };
 	if (setsockopt(socket_fd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0) {
 		perror("Error setting IP_TTL\n");
 		return 1;
@@ -25,18 +20,51 @@ static int ft_ping(struct in_addr host, char *hostname) {
 		perror("Error setting IP_TOS\n");
 		return 1;
 	};
-	ping_loop(socket_fd, host, hostname);
+	t_list *aux = tokens->head;
+	printf("PING %s (%s): %d data bytes\n", ((t_host_info *)(tokens->head->data))->hostname,
+		((t_host_info *)(aux->data))->ip_str,
+		PAYLOAD_SIZE);
+	
+	double start, end;
+    size_t total_pkgs = 0, recv_pkgs = 0;
+    t_stats stats = {0, 0, 0, 0, 0, 0, NULL};
+	while (tokens->head) {
+		ping_loop(socket_fd, tokens, &start, &end, &total_pkgs, &recv_pkgs, &stats);
+			if (pingloop)
+				continue;
+		ft_calculate_stats(((t_host_info *)(tokens->head->data))->hostname, total_pkgs, recv_pkgs, stats);
+        free_list(&stats.head);
+        total_pkgs = 0;
+        recv_pkgs = 0;
+        stats = (t_stats) {0, 0, 0, 0, 0, 0, NULL};
+		tokens->head = tokens->head->next;
+		if (tokens->head != NULL)
+			printf("PING %s (%s): %d data bytes\n", ((t_host_info *)(tokens->head->data))->hostname,
+				((t_host_info *)(aux->data))->ip_str,
+				PAYLOAD_SIZE);
+	}
+	tokens->head = aux;
 	close(socket_fd);
 	return 0;
 }
 
 int main(int argc, char **argv) {
-	if (argc != 2) {
+	if (argc < 2) {
 		printf("Print usage\n"); // TODO print usage
 		return 1;
 	}
-	// TODO parse options
+	if (getuid() != 0) {
+		printf("Require root\n");
+		return 1;
+	}
 	signal(SIGINT, signal_handler);
-	struct in_addr ip = dns_look_up(&argv[1]);
-	return ft_ping(ip, argv[1]);
+	t_tokens tokens;
+	for (int i = 1; i < argc; i++)
+	{
+		t_host_info *host_info = dns_look_up(&argv[i]);
+		lst_add_back(&tokens.head, lst_new(host_info));
+	}
+	ft_ping(&tokens);
+	free_list_data(&tokens.head);
+	return EXIT_SUCCESS;
 }
