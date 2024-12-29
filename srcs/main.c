@@ -9,8 +9,7 @@ static void parse_tokens(int argc, char **argv, t_tokens *tokens) {
         } else if (strcmp(argv[i], "-?") == 0) {
             tokens->flags |= FLAG_HELP;
         } else {
-            t_host_info *host_info = dns_look_up(&argv[i]);
-            lst_add_back(&tokens->head, lst_new(host_info));
+            lst_add_back(&tokens->head, lst_new(argv[i]));
         }
     }
 }
@@ -35,8 +34,9 @@ static int ft_ping(t_tokens *tokens) {
 		return 1;
 	};
 	t_list *aux = tokens->head;
-	printf("PING %s (%s): %d data bytes\n", ((t_host_info *)(tokens->head->data))->hostname,
-		((t_host_info *)(aux->data))->ip_str,
+	tokens->head->data = (void *)dns_look_up((char *)tokens->head->data);
+	printf("PING %s (%s): %d data bytes\n",((t_host_info *)(tokens->head->data))->hostname,
+		((t_host_info *)(tokens->head->data))->ip_str,
 		PAYLOAD_SIZE);
 	
 	double start, end;
@@ -52,10 +52,12 @@ static int ft_ping(t_tokens *tokens) {
         recv_pkgs = 0;
         stats = (t_stats) {0, 0, 0, 0, 0, 0, NULL};
 		tokens->head = tokens->head->next;
-		if (tokens->head != NULL)
+		if (tokens->head != NULL) {
+			tokens->head->data = (void *)dns_look_up((char *)tokens->head->data);
 			printf("PING %s (%s): %d data bytes\n", ((t_host_info *)(tokens->head->data))->hostname,
 				((t_host_info *)(tokens->head->data))->ip_str,
 				PAYLOAD_SIZE);
+		}
 	}
 	tokens->head = aux;
 	close(socket_fd);

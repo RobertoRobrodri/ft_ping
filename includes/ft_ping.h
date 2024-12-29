@@ -19,7 +19,7 @@
 #include <sys/time.h>
 
 
-#define TTL 63
+#define TTL 64
 #define TIMEOUT 1
 #define PAYLOAD_SIZE 56
 #define PACKET_SIZE sizeof(struct icmphdr) + PAYLOAD_SIZE
@@ -65,7 +65,7 @@ int recv_ping(int socket_fd, char *ip_str, double *start, double *end);
 
 unsigned short calculate_checksum(unsigned short *packet, size_t len);
 
-t_host_info *dns_look_up(char **host);
+t_host_info *dns_look_up(char *host);
 
 void signal_handler(int sig);
 
