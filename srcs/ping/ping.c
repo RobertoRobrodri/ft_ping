@@ -56,7 +56,6 @@ int recv_ping(int socket_fd, char *ip_str, double *start, double *end) {
 	struct iphdr *ip = (struct iphdr *)buffer;
 	struct icmphdr *icmp = (struct icmphdr *)(buffer + ip->ihl * 4);
 	if (icmp->type != ICMP_ECHOREPLY) {
-		printf("%d\n", icmp->type);
 		return icmp->type;
 	}
 	*end = get_time_val();
@@ -77,7 +76,7 @@ void ping_loop(int socket_fd, t_tokens *tokens, double *start, double *end, size
         (*total_pkgs)++;
         if (recv_ping(socket_fd, ((t_host_info *)(tokens->head->data))->ip_str, start, end) == 0) {
             (*recv_pkgs)++;
-            double diff = end - start;
+            double diff = *end - *start;
             double *diff_ptr = malloc(sizeof(double));
             if (diff_ptr == NULL) {
                 perror("malloc");

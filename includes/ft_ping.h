@@ -28,6 +28,9 @@
 #define INTERVAL 1
 #endif
 
+#define FLAG_VERBOSE (1 << 0)  // -v flag
+#define FLAG_HELP    (1 << 1)  // -? flag
+
 typedef struct s_list {
     void *data;
     struct s_list *next;
@@ -51,7 +54,7 @@ typedef struct s_host_info {
 } t_host_info;
 
 typedef struct s_tokens {
-	bool flags;
+	int flags;
 	t_list *head;
 } t_tokens;
 

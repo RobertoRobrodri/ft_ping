@@ -15,7 +15,7 @@ t_host_info *dns_look_up(char **host) {
 	int status = getaddrinfo(*host, NULL, &hints, &result); 
 	if (status != 0) {
         dprintf(STDERR_FILENO, "Error getting address info: %s\n", gai_strerror(status));
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 	struct sockaddr_in *addr = (struct sockaddr_in *)result->ai_addr;
 	ret->ip = addr->sin_addr;

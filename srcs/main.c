@@ -2,6 +2,20 @@
 
 bool pingloop = true;
 
+static void parse_tokens(int argc, char **argv, t_tokens *tokens) {
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-v") == 0) {
+            tokens->flags |= FLAG_VERBOSE;
+        } else if (strcmp(argv[i], "-?") == 0) {
+            tokens->flags |= FLAG_HELP;
+        } else {
+            t_host_info *host_info = dns_look_up(&argv[i]);
+            lst_add_back(&tokens->head, lst_new(host_info));
+        }
+    }
+}
+
+
 static int ft_ping(t_tokens *tokens) {
 	int socket_fd;
 	int ttl = TTL;
@@ -30,8 +44,8 @@ static int ft_ping(t_tokens *tokens) {
     t_stats stats = {0, 0, 0, 0, 0, 0, NULL};
 	while (tokens->head) {
 		ping_loop(socket_fd, tokens, &start, &end, &total_pkgs, &recv_pkgs, &stats);
-			if (pingloop)
-				continue;
+		if (pingloop)
+			continue;
 		ft_calculate_stats(((t_host_info *)(tokens->head->data))->hostname, total_pkgs, recv_pkgs, stats);
         free_list(&stats.head);
         total_pkgs = 0;
@@ -40,7 +54,7 @@ static int ft_ping(t_tokens *tokens) {
 		tokens->head = tokens->head->next;
 		if (tokens->head != NULL)
 			printf("PING %s (%s): %d data bytes\n", ((t_host_info *)(tokens->head->data))->hostname,
-				((t_host_info *)(aux->data))->ip_str,
+				((t_host_info *)(tokens->head->data))->ip_str,
 				PAYLOAD_SIZE);
 	}
 	tokens->head = aux;
@@ -58,12 +72,8 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	signal(SIGINT, signal_handler);
-	t_tokens tokens;
-	for (int i = 1; i < argc; i++)
-	{
-		t_host_info *host_info = dns_look_up(&argv[i]);
-		lst_add_back(&tokens.head, lst_new(host_info));
-	}
+	t_tokens tokens = {1, NULL};
+	parse_tokens(argc, argv, &tokens);
 	ft_ping(&tokens);
 	free_list_data(&tokens.head);
 	return EXIT_SUCCESS;
