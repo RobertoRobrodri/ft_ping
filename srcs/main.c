@@ -2,15 +2,40 @@
 
 bool pingloop = true;
 
+static void print_header(t_tokens *tokens) {
+	printf("PING %s (%s): %d data bytes",((t_host_info *)(tokens->head->data))->hostname,
+		((t_host_info *)(tokens->head->data))->ip_str,
+		PAYLOAD_SIZE);
+	if (tokens->flags & FLAG_VERBOSE) {
+		int pid = getpid();
+		printf(", id 0x%04x = %d", pid, pid);
+	}
+	printf("\n");
+}
+
+static void print_usage(void) {
+	printf("Usage: ping [OPTION...] HOST ...\n");
+	printf("Send ICMP ECHO_REQUEST packets to network hosts.\n");
+	printf("Options:\n");
+	printf("-v verbose output\n");
+	printf("-? give this help list\n");
+}
+
 static void parse_tokens(int argc, char **argv, t_tokens *tokens) {
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-v") == 0) {
-            tokens->flags |= FLAG_VERBOSE;
-        } else if (strcmp(argv[i], "-?") == 0) {
-            tokens->flags |= FLAG_HELP;
-        } else {
+		if (argv[i][0] == '-') {
+			for (int j = 1; argv[i][j]; j++) {
+				if (argv[i][j] == 'v')
+					tokens->flags |= FLAG_VERBOSE;
+				else if (argv[i][j] == '?')
+					tokens->flags |= FLAG_HELP;
+				else {
+					dprintf(STDERR_FILENO, "ping: invalid option -- '%c'\n", argv[i][j]);
+					dprintf(STDERR_FILENO, "Try 'ping -?' for more information.\n");
+				}
+		}
+        } else
             lst_add_back(&tokens->head, lst_new(argv[i]));
-        }
     }
 }
 
@@ -35,9 +60,7 @@ static int ft_ping(t_tokens *tokens) {
 	};
 	t_list *aux = tokens->head;
 	tokens->head->data = (void *)dns_look_up((char *)tokens->head->data);
-	printf("PING %s (%s): %d data bytes\n",((t_host_info *)(tokens->head->data))->hostname,
-		((t_host_info *)(tokens->head->data))->ip_str,
-		PAYLOAD_SIZE);
+	print_header(tokens);
 	
 	double start, end;
     size_t total_pkgs = 0, recv_pkgs = 0;
@@ -52,12 +75,8 @@ static int ft_ping(t_tokens *tokens) {
         recv_pkgs = 0;
         stats = (t_stats) {0, 0, 0, 0, 0, 0, NULL};
 		tokens->head = tokens->head->next;
-		if (tokens->head != NULL) {
-			tokens->head->data = (void *)dns_look_up((char *)tokens->head->data);
-			printf("PING %s (%s): %d data bytes\n", ((t_host_info *)(tokens->head->data))->hostname,
-				((t_host_info *)(tokens->head->data))->ip_str,
-				PAYLOAD_SIZE);
-		}
+		if (tokens->head)
+			print_header(tokens);
 	}
 	tokens->head = aux;
 	close(socket_fd);
@@ -66,16 +85,21 @@ static int ft_ping(t_tokens *tokens) {
 
 int main(int argc, char **argv) {
 	if (argc < 2) {
-		printf("Print usage\n"); // TODO print usage
+		dprintf(STDERR_FILENO, "ping: missing host operand\n");
+		dprintf(STDERR_FILENO, "Try 'ping -?' for more information.\n");
 		return 1;
 	}
 	if (getuid() != 0) {
-		printf("Require root\n");
+		dprintf(STDERR_FILENO, "Require root\n");
 		return 1;
 	}
 	signal(SIGINT, signal_handler);
 	t_tokens tokens = {1, NULL};
 	parse_tokens(argc, argv, &tokens);
+	if (tokens.flags & FLAG_HELP) {
+		print_usage();
+		exit(EXIT_SUCCESS);
+	}
 	ft_ping(&tokens);
 	free_list_data(&tokens.head);
 	return EXIT_SUCCESS;

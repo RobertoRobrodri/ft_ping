@@ -20,7 +20,7 @@
 
 
 #define TTL 64
-#define TIMEOUT 1
+#define TIMEOUT 64
 #define PAYLOAD_SIZE 56
 #define PACKET_SIZE sizeof(struct icmphdr) + PAYLOAD_SIZE
 
@@ -28,8 +28,8 @@
 #define INTERVAL 1
 #endif
 
-#define FLAG_VERBOSE (1 << 0)  // -v flag
-#define FLAG_HELP    (1 << 1)  // -? flag
+#define FLAG_VERBOSE (1 << 1)  // bit 0
+#define FLAG_HELP    (1 << 2)  // bit 1
 
 typedef struct s_list {
     void *data;
@@ -54,14 +54,14 @@ typedef struct s_host_info {
 } t_host_info;
 
 typedef struct s_tokens {
-	int flags;
+	unsigned char flags;
 	t_list *head;
 } t_tokens;
 
 void ping_loop(int socket_fd, t_tokens *tokens, double *start, double *end, \
 	size_t *total_pkgs, size_t *recv_pkgs, t_stats *stats);
 int send_ping(int socket_fd, unsigned long host, double *start);
-int recv_ping(int socket_fd, char *ip_str, double *start, double *end);
+int recv_ping(int socket_fd, char *ip_str, double *start, double *end, unsigned char flag);
 
 unsigned short calculate_checksum(unsigned short *packet, size_t len);
 
