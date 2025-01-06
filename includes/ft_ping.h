@@ -78,4 +78,9 @@ void lst_add_back(t_list **lst, t_list *new);
 void free_list(t_list **lst);
 void free_list_data(t_list **lst);
 
+void print_usage(void);
+void print_header(t_tokens *tokens);
+void print_err_icmp_body(uint8_t *buf);
+void print_icmp_err(int type, int code);
+
 extern bool pingloop;

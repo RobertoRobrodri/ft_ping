@@ -20,6 +20,7 @@ SUBFILE1_PATH   = ping
 SUBFILE2_PATH   = dns
 SUBFILE3_PATH   = signal
 SUBFILE4_PATH   = list
+SUBFILE5_PATH	= print
 OBJ_PATH    	= objects
 
 # SOURCES #
@@ -28,12 +29,14 @@ SUBFILE1_SRC = ping.c
 SUBFILE2_SRC = dns.c
 SUBFILE3_SRC = signal.c
 SUBFILE4_SRC = list.c
+SUBFILE5_SRC = print.c
 
 SRC =	main.c \
 		$(addprefix $(SUBFILE1_PATH)/, $(SUBFILE1_SRC)) \
 		$(addprefix $(SUBFILE2_PATH)/, $(SUBFILE2_SRC)) \
 		$(addprefix $(SUBFILE3_PATH)/, $(SUBFILE3_SRC)) \
-		$(addprefix $(SUBFILE4_PATH)/, $(SUBFILE4_SRC))
+		$(addprefix $(SUBFILE4_PATH)/, $(SUBFILE4_SRC)) \
+		$(addprefix $(SUBFILE5_PATH)/, $(SUBFILE5_SRC))
 
 # RULES #
 #
@@ -48,6 +51,7 @@ $(OBJ_PATH):
 	mkdir -p $(addprefix $(OBJ_PATH)/, $(SUBFILE2_PATH))
 	mkdir -p $(addprefix $(OBJ_PATH)/, $(SUBFILE3_PATH))
 	mkdir -p $(addprefix $(OBJ_PATH)/, $(SUBFILE4_PATH))
+	mkdir -p $(addprefix $(OBJ_PATH)/, $(SUBFILE5_PATH))
 
 $(OBJ_PATH)/%.o: $(SRC_PATH)/%.c | $(OBJ_PATH)
 	$(CC) $(CFLAGS) -c $< -o $@

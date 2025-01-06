@@ -2,25 +2,6 @@
 
 bool pingloop = true;
 
-static void print_header(t_tokens *tokens) {
-	printf("PING %s (%s): %d data bytes",((t_host_info *)(tokens->head->data))->hostname,
-		((t_host_info *)(tokens->head->data))->ip_str,
-		PAYLOAD_SIZE);
-	if (tokens->flags & FLAG_VERBOSE) {
-		int pid = getpid();
-		printf(", id 0x%04x = %d", pid, pid);
-	}
-	printf("\n");
-}
-
-static void print_usage(void) {
-	printf("Usage: ping [OPTION...] HOST ...\n");
-	printf("Send ICMP ECHO_REQUEST packets to network hosts.\n");
-	printf("Options:\n");
-	printf("-v verbose output\n");
-	printf("-? give this help list\n");
-}
-
 static void parse_tokens(int argc, char **argv, t_tokens *tokens) {
     for (int i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
