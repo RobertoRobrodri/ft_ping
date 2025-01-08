@@ -20,7 +20,7 @@
 
 
 #define TTL 64
-#define TIMEOUT 64
+#define TIMEOUT 1
 #define PAYLOAD_SIZE 56
 #define PACKET_SIZE sizeof(struct icmphdr) + PAYLOAD_SIZE
 
