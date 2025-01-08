@@ -19,6 +19,9 @@ t_host_info *dns_look_up(char *host) {
 	}
 	struct sockaddr_in *addr = (struct sockaddr_in *)result->ai_addr;
 	ret->ip = addr->sin_addr;
+	if (ret->ip.s_addr == INADDR_ANY) {
+		inet_pton(AF_INET, "127.0.0.1", &ret->ip);
+	}
 	ret->hostname = strdup(result->ai_canonname);
 	inet_ntop(AF_INET, &ret->ip, ret->ip_str, INET_ADDRSTRLEN);
 	freeaddrinfo(result);

@@ -78,7 +78,6 @@ void ping_loop(int socket_fd, t_tokens *tokens, double *start, double *end, size
 
     if (send_ping(socket_fd, ((t_host_info *)(tokens->head->data))->ip.s_addr, start) == 0) {
         (*total_pkgs)++;
-		printf("Puta\n");
         if (recv_ping(socket_fd, ((t_host_info *)(tokens->head->data))->ip_str, start, end, tokens->flags) == 0) {
             (*recv_pkgs)++;
             double diff = *end - *start;
