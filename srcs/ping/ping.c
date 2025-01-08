@@ -50,10 +50,10 @@ int recv_ping(int socket_fd, char *ip_str, double *start, double *end, unsigned 
 
 	memset(buffer, 0, sizeof(buffer));
 	int buflen = recvfrom(socket_fd, buffer, sizeof(buffer), 0, &saddr, &saddr_len);
-	if (buflen < 0) {
+	/* if (buflen < 0) {
 		// perror("Error receiving packet\n");
 		return 1;
-	}
+	}*/
 	struct iphdr *ip = (struct iphdr *)buffer;
 	struct icmphdr *icmp = (struct icmphdr *)(buffer + ip->ihl * 4);
 	if (icmp->type != ICMP_ECHOREPLY && icmp->un.echo.id != getpid()) { // case ping localhost
