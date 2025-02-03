@@ -63,21 +63,37 @@ void print_icmp_err(int type, int code) {
 	case ICMP_REDIRECT:
 		switch(code) {
 		case ICMP_REDIR_NET:
-			printf("Redirect Network");
+			printf("Redirect Network\n");
 			break;
 		case ICMP_REDIR_HOST:
-			printf("Redirect Host");
+			printf("Redirect Host\n");
 			break;
 		case ICMP_REDIR_NETTOS:
-			printf("Redirect Type of Service and Network");
+			printf("Redirect Type of Service and Network\n");
 			break;
 		case ICMP_REDIR_HOSTTOS:
-			printf("Redirect Type of Service and Host");
+			printf("Redirect Type of Service and Host\n");
 			break;
 		default:
-			printf("Redirect, Bad Code: %d", code);
+			printf("Redirect, Bad Code: %d\n", code);
 			break;
 		}
+		break;
+	case ICMP_TIME_EXCEEDED:
+		switch (code) {
+		case ICMP_EXC_TTL:
+			printf("Time to Live Exceeded in Transit\n");
+			break;
+		case ICMP_EXC_FRAGTIME:
+			printf("Fragment Reassembly Time Exceeded\n");
+			break;
+		default:
+			printf("Time Exceeded, Bad Code: %d\n", code);
+			break;
+		}
+		break;
+	default:
+		printf("Unknown ICMP error type: %d\n", type);
 		break;
 	}
 }
