@@ -56,8 +56,10 @@ static int ft_ping(t_tokens *tokens) {
         recv_pkgs = 0;
         stats = (t_stats) {0, 0, 0, 0, 0, 0, NULL};
 		tokens->head = tokens->head->next;
-		if (tokens->head)
+		if (tokens->head) {
+			tokens->head->data = (void *)dns_look_up((char *)tokens->head->data);
 			print_header(tokens);
+		}
 	}
 	tokens->head = aux;
 	close(socket_fd);
